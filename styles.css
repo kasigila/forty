@@ -231,6 +231,8 @@ body {
   align-items: center;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   z-index: 100;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .tab-btn {
@@ -239,6 +241,9 @@ body {
   align-items: center;
   gap: 2px;
   padding: var(--space-sm) var(--space-md);
+  min-height: 48px;
+  min-width: 48px;
+  justify-content: center;
   background: none;
   border: none;
   color: var(--text-muted);
@@ -247,6 +252,7 @@ body {
   cursor: pointer;
   transition: color var(--dur) var(--ease);
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .tab-btn i {
@@ -781,11 +787,67 @@ body {
   margin-bottom: var(--space-md);
 }
 
+.commitments-reminder {
+  width: 100%;
+  max-width: 360px;
+  padding: var(--space-md);
+  background: var(--accent-muted);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+}
+
+.commitments-line {
+  font-size: 0.875rem;
+  color: var(--text);
+  margin: 0;
+}
+
+.commitments-line + .commitments-line {
+  margin-top: var(--space-xs);
+}
+
+.commitments-display {
+  margin-bottom: var(--space-sm);
+}
+
+.commitments-setting-line {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0 0 var(--space-xs);
+}
+
+.chart-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: calc(-1 * var(--space-sm)) 0 var(--space-sm);
+}
+
 .streak-chart {
-  height: 120px;
+  height: 140px;
   display: flex;
   align-items: flex-end;
   gap: 4px;
+}
+
+.streak-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.streak-bar-wrap .streak-bar {
+  width: 100%;
+  min-width: 6px;
+  min-height: 4px;
+}
+
+.streak-bar-label {
+  font-size: 0.625rem;
+  color: var(--text-muted);
 }
 
 .mood-chart {
@@ -919,6 +981,38 @@ body {
   text-align: center;
   padding: var(--space-3xl);
   color: var(--text-muted);
+}
+
+.journal-empty i {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: var(--space-md);
+  opacity: 0.5;
+}
+
+.journal-empty-hint {
+  font-size: 0.875rem;
+  margin-top: var(--space-sm);
+}
+
+.journal-entry-snippet.muted {
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.today-status {
+  margin: var(--space-md) 0;
+}
+
+.today-status-msg {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+#edit-commitments-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
 }
 
 /* ═══════════════════════════════════════════════════════════════

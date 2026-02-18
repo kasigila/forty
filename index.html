@@ -73,24 +73,24 @@
     <!-- Main App -->
     <main id="main-app" class="view hidden" data-view="main">
       <!-- Tab Bar -->
-      <nav class="tab-bar">
-        <button type="button" class="tab-btn active" data-tab="dashboard">
+      <nav class="tab-bar" role="tablist">
+        <button type="button" class="tab-btn active" role="tab" data-tab="dashboard" aria-selected="true">
           <span class="tab-icon"><i class="fa-solid fa-house"></i></span>
           <span class="tab-label">Home</span>
         </button>
-        <button type="button" class="tab-btn" data-tab="checkin">
+        <button type="button" class="tab-btn" role="tab" data-tab="checkin" aria-selected="false">
           <span class="tab-icon"><i class="fa-solid fa-pen-to-square"></i></span>
           <span class="tab-label">Log</span>
         </button>
-        <button type="button" class="tab-btn" data-tab="analytics">
+        <button type="button" class="tab-btn" role="tab" data-tab="analytics" aria-selected="false">
           <span class="tab-icon"><i class="fa-solid fa-chart-line"></i></span>
           <span class="tab-label">Stats</span>
         </button>
-        <button type="button" class="tab-btn" data-tab="journal">
+        <button type="button" class="tab-btn" role="tab" data-tab="journal" aria-selected="false">
           <span class="tab-icon"><i class="fa-solid fa-book-open"></i></span>
           <span class="tab-label">Journal</span>
         </button>
-        <button type="button" class="tab-btn" data-tab="settings">
+        <button type="button" class="tab-btn" role="tab" data-tab="settings" aria-selected="false">
           <span class="tab-icon"><i class="fa-solid fa-gear"></i></span>
           <span class="tab-label">Settings</span>
         </button>
@@ -103,6 +103,10 @@
           <button type="button" class="icon-btn emergency-trigger" title="I'm struggling"><i class="fa-solid fa-hand-holding-heart"></i></button>
         </header>
         <div class="dashboard-content">
+          <div class="commitments-reminder" id="commitments-reminder">
+            <p class="commitments-line" id="giving-up-line"></p>
+            <p class="commitments-line" id="adding-line"></p>
+          </div>
           <div class="day-counter">
             <div class="progress-ring" role="progressbar">
               <svg viewBox="0 0 120 120" class="ring-svg">
@@ -135,6 +139,7 @@
         </header>
         <div class="checkin-panel-content">
           <p class="checkin-panel-desc">Log your fasting, prayer, scripture, and reflection for today.</p>
+          <div class="today-status" id="today-status"></div>
           <button type="button" class="btn-primary" id="btn-open-checkin-modal">Log Today</button>
         </div>
       </section>
@@ -150,7 +155,8 @@
             <span class="score-label" id="discipline-label">Discipline Score</span>
           </div>
           <div class="chart-block">
-            <h3>Streak History</h3>
+            <h3>Last 14 days</h3>
+            <p class="chart-desc">Disciplines completed each day (fast, prayer, scripture)</p>
             <div class="streak-chart" id="streak-chart"></div>
           </div>
           <div class="stats-grid">
@@ -164,7 +170,8 @@
             </div>
           </div>
           <div class="chart-block">
-            <h3>Mood trends</h3>
+            <h3>Mood distribution</h3>
+            <p class="chart-desc">How you've felt across your check-ins</p>
             <div class="mood-chart" id="mood-chart"></div>
           </div>
         </div>
@@ -189,6 +196,10 @@
         <div class="settings-content">
           <div class="settings-group">
             <h3>Commitments</h3>
+            <div class="commitments-display" id="commitments-display">
+              <p class="commitments-setting-line" id="settings-giving-up"></p>
+              <p class="commitments-setting-line" id="settings-adding"></p>
+            </div>
             <a href="#" class="settings-row" id="edit-commitments">Edit commitments</a>
           </div>
           <div class="settings-group">
@@ -284,13 +295,31 @@
       </div>
     </div>
 
+    <!-- Edit Commitments Modal -->
+    <div id="edit-commitments-modal" class="modal edit-commitments-modal hidden">
+      <div class="modal-backdrop" data-close-edit-commitments></div>
+      <div class="modal-content modal-slide">
+        <div class="modal-header">
+          <h2>Edit commitments</h2>
+          <button type="button" class="modal-close" aria-label="Close" data-close-edit-commitments><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <label class="input-label">What I&rsquo;m giving up</label>
+          <input type="text" id="edit-giving-up" class="input-text" placeholder="e.g. Social media, sweets..." maxlength="80" />
+          <label class="input-label">What I&rsquo;m adding</label>
+          <input type="text" id="edit-adding" class="input-text" placeholder="e.g. Morning prayer, reading..." maxlength="80" />
+          <button type="button" class="btn-primary" id="btn-save-commitments">Save</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Easter Summary -->
     <div id="easter-summary" class="modal hidden">
-      <div class="modal-backdrop"></div>
+      <div class="modal-backdrop" data-close-easter></div>
       <div class="modal-content easter-modal">
         <h2 class="serif-title">You did it.</h2>
         <p class="easter-message">40 days complete. May this journey stay with you.</p>
-        <button type="button" class="btn-primary" id="easter-dismiss">Continue</button>
+        <button type="button" class="btn-primary" id="easter-dismiss" data-close-easter>Continue</button>
       </div>
     </div>
   </div>

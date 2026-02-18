@@ -167,6 +167,13 @@
     const day = S.currentDay(data);
     const scripture = getScriptureForDay(day);
 
+    const givingUpEl = document.getElementById('giving-up-line');
+    const addingEl = document.getElementById('adding-line');
+    if (givingUpEl) givingUpEl.textContent = data.commitments?.givingUp ? 'Giving up: ' + data.commitments.givingUp : '';
+    if (addingEl) addingEl.textContent = data.commitments?.adding ? 'Adding: ' + data.commitments.adding : '';
+    const cr = document.getElementById('commitments-reminder');
+    if (cr) cr.style.display = (data.commitments?.givingUp || data.commitments?.adding) ? 'block' : 'none';
+
     const dayNumEl = document.getElementById('day-num');
     const ringFill = document.querySelector('.ring-fill');
     const streakEl = document.getElementById('streak-value');
@@ -242,20 +249,28 @@
     const failureDay = A.failureDayOfWeek(data) || '—';
     const streakData = A.streakHistoryData(data);
     const moodData = A.moodTrendData(data);
+    const hasLogs = (data.logs || []).length > 0;
 
     document.getElementById('discipline-score').textContent = score ?? '—';
-    document.getElementById('discipline-label').textContent = label;
-    document.getElementById('weekly-pct').textContent = weeklyPct + '%';
+    document.getElementById('discipline-label').textContent = hasLogs ? label : 'Log check-ins to see your score';
+    document.getElementById('weekly-pct').textContent = hasLogs ? weeklyPct + '%' : '—';
     document.getElementById('failure-day').textContent = failureDay;
 
     const streakChart = document.getElementById('streak-chart');
     streakChart.innerHTML = '';
-    const maxVal = Math.max(...streakData.map((d) => d.value), 1);
     streakData.forEach((d) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'streak-bar-wrap';
       const bar = document.createElement('div');
       bar.className = 'streak-bar' + (d.value === 0 ? ' empty' : '');
       bar.style.height = `${(d.value / 3) * 100}%`;
-      streakChart.appendChild(bar);
+      bar.title = `${d.date}: ${d.value}/3`;
+      wrap.appendChild(bar);
+      const lbl = document.createElement('span');
+      lbl.className = 'streak-bar-label';
+      lbl.textContent = new Date(d.date).getDate();
+      wrap.appendChild(lbl);
+      streakChart.appendChild(wrap);
     });
 
     const moodChart = document.getElementById('mood-chart');
@@ -283,12 +298,12 @@
   // JOURNAL
   // ═══════════════════════════════════════════════════════════
   function renderJournal() {
-    const logs = [...(data.logs || [])].filter((l) => l.reflection).sort((a, b) => (a.date > b.date ? -1 : 1));
+    const logs = [...(data.logs || [])].sort((a, b) => (a.date > b.date ? -1 : 1));
     const container = document.getElementById('journal-timeline');
     container.innerHTML = '';
 
     if (logs.length === 0) {
-      container.innerHTML = '<p class="journal-empty">No reflections yet. Log your first check-in with a reflection.</p>';
+      container.innerHTML = '<div class="journal-empty"><i class="fa-regular fa-book-open"></i><p>No entries yet.</p><p class="journal-empty-hint">Log your first check-in from the Log tab.</p></div>';
       return;
     }
 
@@ -296,20 +311,21 @@
       const entry = document.createElement('div');
       entry.className = 'journal-entry';
       entry.dataset.date = log.date;
+      const hasReflection = !!(log.reflection && log.reflection.trim());
+      const snippetText = hasReflection ? escapeHtml((log.reflection || '').slice(0, 120)) + ((log.reflection || '').length > 120 ? '…' : '') : 'No reflection written';
       entry.innerHTML = `
         <div class="journal-entry-header">
           <span class="journal-entry-date">${U.formatDate(log.date)}</span>
           <span class="journal-entry-mood">${U.getMoodIcon(log.mood)}</span>
         </div>
-        <p class="journal-entry-snippet">${escapeHtml((log.reflection || '').slice(0, 120))}${(log.reflection || '').length > 120 ? '…' : ''}</p>
+        <p class="journal-entry-snippet ${!hasReflection ? 'muted' : ''}">${snippetText}</p>
         <div class="journal-entry-expanded hidden"></div>
       `;
-      const snippet = entry.querySelector('.journal-entry-snippet');
       const expanded = entry.querySelector('.journal-entry-expanded');
       entry.querySelector('.journal-entry-header').addEventListener('click', () => {
         const isExpanded = entry.classList.toggle('expanded');
         expanded.classList.toggle('hidden', !isExpanded);
-        if (isExpanded) expanded.textContent = log.reflection || '';
+        if (isExpanded) expanded.textContent = log.reflection || 'No reflection written';
       });
       container.appendChild(entry);
     });
@@ -389,7 +405,10 @@
   // SETTINGS
   // ═══════════════════════════════════════════════════════════
   function renderSettings() {
+    data = S.load();
     document.getElementById('toggle-dark').checked = data.theme === 'dark';
+    document.getElementById('settings-giving-up').textContent = data.commitments?.givingUp ? 'Giving up: ' + data.commitments.givingUp : 'Not set';
+    document.getElementById('settings-adding').textContent = data.commitments?.adding ? 'Adding: ' + data.commitments.adding : 'Not set';
     document.querySelectorAll('#settings .tone-btn').forEach((btn) => {
       btn.classList.toggle('selected', btn.dataset.tone === data.toneMode);
     });
@@ -410,21 +429,54 @@
     location.reload();
   }
 
-  function editCommitments() {
+  function openEditCommitmentsModal() {
     data = S.load();
-    const givingUp = prompt('What are you giving up?', data.commitments?.givingUp || '');
-    const adding = prompt('What are you adding?', data.commitments?.adding || '');
-    if (givingUp !== null) data.commitments = { ...data.commitments, givingUp: String(givingUp) };
-    if (adding !== null) data.commitments = { ...data.commitments, adding: String(adding) };
+    document.getElementById('edit-giving-up').value = data.commitments?.givingUp || '';
+    document.getElementById('edit-adding').value = data.commitments?.adding || '';
+    U.show(document.getElementById('edit-commitments-modal'));
+    document.getElementById('edit-commitments-modal').classList.remove('hidden');
+  }
+  function closeEditCommitmentsModal() {
+    U.hide(document.getElementById('edit-commitments-modal'));
+    document.getElementById('edit-commitments-modal').classList.add('hidden');
+  }
+  function saveCommitments() {
+    data = S.load();
+    data.commitments = {
+      givingUp: document.getElementById('edit-giving-up').value.trim(),
+      adding: document.getElementById('edit-adding').value.trim()
+    };
     S.save(data);
+    closeEditCommitmentsModal();
+    renderSettings();
+    renderDashboard();
   }
 
   // ═══════════════════════════════════════════════════════════
   // ROUTING & TABS
   // ═══════════════════════════════════════════════════════════
+  function renderCheckinPanel() {
+    data = S.load();
+    const today = S.todayString();
+    const log = S.getLogForDate(data, today);
+    const statusEl = document.getElementById('today-status');
+    if (!log) {
+      statusEl.innerHTML = '<p class="today-status-msg">Not logged yet.</p>';
+    } else {
+      const parts = [];
+      if (log.fast) parts.push('<i class="fa-solid fa-check"></i> Fast');
+      else parts.push('<i class="fa-regular fa-circle"></i> Fast');
+      if (log.prayer) parts.push('<i class="fa-solid fa-check"></i> Prayer');
+      else parts.push('<i class="fa-regular fa-circle"></i> Prayer');
+      if (log.scripture) parts.push('<i class="fa-solid fa-check"></i> Scripture');
+      else parts.push('<i class="fa-regular fa-circle"></i> Scripture');
+      statusEl.innerHTML = '<p class="today-status-msg">' + parts.join(' &nbsp; ') + '</p>';
+    }
+  }
+
   function onPanelChange(panelId) {
     if (panelId === 'dashboard') renderDashboard();
-    if (panelId === 'checkin') renderCheckin();
+    if (panelId === 'checkin') { renderCheckinPanel(); }
     if (panelId === 'analytics') renderAnalytics();
     if (panelId === 'journal') renderJournal();
     if (panelId === 'settings') renderSettings();
@@ -454,6 +506,20 @@
 
   function initMainApp() {
     window.location.hash = window.location.hash || 'dashboard';
+
+    const tabBar = document.querySelector('.tab-bar');
+    if (tabBar) {
+      tabBar.addEventListener('click', (e) => {
+        const tabBtn = e.target.closest('.tab-btn');
+        if (tabBtn && tabBtn.dataset.tab) {
+          e.preventDefault();
+          e.stopPropagation();
+          Forty.setActivePanel(tabBtn.dataset.tab);
+          window.location.hash = tabBtn.dataset.tab;
+        }
+      });
+    }
+
     R.initRouter({
       onRoute(view, panel) {
         const id = panel || view;
@@ -464,12 +530,6 @@
     });
 
     document.body.addEventListener('click', (e) => {
-      const tabBtn = e.target.closest('.tab-btn');
-      if (tabBtn && tabBtn.dataset.tab) {
-        e.preventDefault();
-        window.location.hash = tabBtn.dataset.tab;
-        return;
-      }
       const closeModal = e.target.closest('[data-close-modal]');
       if (closeModal) {
         e.preventDefault();
@@ -520,18 +580,28 @@
       }
       if (e.target.closest('#edit-commitments')) {
         e.preventDefault();
-        editCommitments();
+        openEditCommitmentsModal();
+        return;
+      }
+      if (e.target.closest('[data-close-edit-commitments]')) {
+        e.preventDefault();
+        closeEditCommitmentsModal();
+        return;
+      }
+      if (e.target.id === 'btn-save-commitments' || e.target.closest('#btn-save-commitments')) {
+        e.preventDefault();
+        saveCommitments();
+        return;
+      }
+      if (e.target.closest('[data-close-easter]')) {
+        e.preventDefault();
+        U.hide(document.getElementById('easter-summary'));
+        document.getElementById('easter-summary').classList.add('hidden');
         return;
       }
       if (e.target.closest('#reset-lent')) {
         e.preventDefault();
         resetLent();
-        return;
-      }
-      if (e.target.id === 'easter-dismiss' || e.target.closest('#easter-dismiss')) {
-        e.preventDefault();
-        U.hide(document.getElementById('easter-summary'));
-        document.getElementById('easter-summary').classList.add('hidden');
         return;
       }
       if (e.target.id === 'btn-save-checkin' || e.target.closest('#btn-save-checkin')) {

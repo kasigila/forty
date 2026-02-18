@@ -34,13 +34,25 @@ function hide(el) {
  * Toggle panel visibility
  */
 function setActivePanel(panelId) {
-  document.querySelectorAll('[data-panel]').forEach((p) => p.classList.remove('active'));
+  document.querySelectorAll('[data-panel]').forEach((p) => {
+    p.classList.remove('active');
+    p.hidden = true;
+  });
   const panel = document.querySelector(`[data-panel="${panelId}"]`);
-  if (panel) panel.classList.add('active');
+  if (panel) {
+    panel.classList.add('active');
+    panel.hidden = false;
+  }
 
-  document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach((b) => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
   const tab = document.querySelector(`[data-tab="${panelId}"]`);
-  if (tab) tab.classList.add('active');
+  if (tab) {
+    tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
+  }
 }
 
 /**
