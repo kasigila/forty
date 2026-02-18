@@ -1,0 +1,26 @@
+{
+  "name": "Forty — A Lent Companion",
+  "short_name": "Forty",
+  "description": "A spiritual discipline system for Lent. Track fasting, prayer, and reflections.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F3EE",
+  "theme_color": "#6E7F5F",
+  "categories": ["lifestyle", "health"],
+  "icons": [
+    {
+      "src": "assets/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

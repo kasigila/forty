@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#6E7F5F" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Forty" />
+  <meta name="description" content="Forty — A Lent Companion. Track fasting, prayer, and reflections through 40 days." />
+  <title>Forty — A Lent Companion</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icons/icon.svg" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Onboarding -->
+    <section id="onboarding" class="view" data-view="onboarding">
+      <div class="onboarding-container">
+        <div class="onboarding-step" data-step="welcome">
+          <h1 class="serif-title">Forty</h1>
+          <p class="tagline">A Lent Companion</p>
+          <p class="onboarding-desc">A gentle companion for your 40-day journey of fasting, prayer, and reflection.</p>
+          <button type="button" class="btn-primary" data-next>Begin</button>
+        </div>
+        <div class="onboarding-step hidden" data-step="dates">
+          <h2 class="serif-heading">When does your Lent begin?</h2>
+          <p class="onboarding-desc">Select your start date</p>
+          <input type="date" id="start-date" class="input-date" required />
+          <button type="button" class="btn-primary" data-next>Continue</button>
+        </div>
+        <div class="onboarding-step hidden" data-step="commitments">
+          <h2 class="serif-heading">Your commitments</h2>
+          <p class="onboarding-desc">What are you giving up? What are you adding?</p>
+          <label class="input-label">What I'm giving up</label>
+          <input type="text" id="giving-up" class="input-text" placeholder="e.g. Social media, sweets..." maxlength="80" />
+          <label class="input-label">What I'm adding</label>
+          <input type="text" id="adding" class="input-text" placeholder="e.g. Morning prayer, reading..." maxlength="80" />
+          <button type="button" class="btn-primary" data-next>Continue</button>
+        </div>
+        <div class="onboarding-step hidden" data-step="why">
+          <h2 class="serif-heading">Why are you doing this?</h2>
+          <p class="onboarding-desc">A reminder for moments when it gets hard</p>
+          <textarea id="why-text" class="input-textarea" placeholder="Write your why..." rows="4" maxlength="500"></textarea>
+          <button type="button" class="btn-primary" data-next>Continue</button>
+        </div>
+        <div class="onboarding-step hidden" data-step="tone">
+          <h2 class="serif-heading">How would you like us to speak to you?</h2>
+          <p class="onboarding-desc">Choose your tone preference</p>
+          <div class="tone-options">
+            <button type="button" class="tone-btn" data-tone="gentle">Gentle</button>
+            <button type="button" class="tone-btn" data-tone="direct">Direct</button>
+            <button type="button" class="tone-btn" data-tone="strict">Strict</button>
+          </div>
+          <button type="button" class="btn-primary" data-next>Start Lent</button>
+        </div>
+      </div>
+      <div class="onboarding-progress">
+        <span class="step-dot" data-dot="0"></span>
+        <span class="step-dot" data-dot="1"></span>
+        <span class="step-dot" data-dot="2"></span>
+        <span class="step-dot" data-dot="3"></span>
+        <span class="step-dot" data-dot="4"></span>
+      </div>
+    </section>
+
+    <!-- Main App -->
+    <main id="main-app" class="view hidden" data-view="main">
+      <!-- Tab Bar -->
+      <nav class="tab-bar">
+        <button type="button" class="tab-btn active" data-tab="dashboard">
+          <span class="tab-icon">◉</span>
+          <span class="tab-label">Home</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="checkin">
+          <span class="tab-icon">✓</span>
+          <span class="tab-label">Log</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="analytics">
+          <span class="tab-icon">◇</span>
+          <span class="tab-label">Stats</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="journal">
+          <span class="tab-icon">◎</span>
+          <span class="tab-label">Journal</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="settings">
+          <span class="tab-icon">⚙</span>
+          <span class="tab-label">Settings</span>
+        </button>
+      </nav>
+
+      <!-- Dashboard -->
+      <section id="dashboard" class="panel active" data-panel="dashboard">
+        <header class="panel-header">
+          <h1 class="serif-title">Forty</h1>
+          <button type="button" class="icon-btn emergency-trigger" title="I'm struggling">✦</button>
+        </header>
+        <div class="dashboard-content">
+          <div class="day-counter">
+            <div class="progress-ring" role="progressbar">
+              <svg viewBox="0 0 120 120" class="ring-svg">
+                <circle class="ring-bg" cx="60" cy="60" r="54" />
+                <circle class="ring-fill" cx="60" cy="60" r="54" />
+              </svg>
+              <div class="ring-center">
+                <span class="day-num" id="day-num">1</span>
+                <span class="day-of">of 40</span>
+              </div>
+            </div>
+          </div>
+          <div class="streak-display">
+            <span class="streak-value" id="streak-value">0</span>
+            <span class="streak-label">day streak</span>
+          </div>
+          <div class="scripture-block">
+            <p class="scripture-text" id="scripture-text"></p>
+            <cite class="scripture-ref" id="scripture-ref"></cite>
+          </div>
+          <button type="button" class="btn-primary btn-log" id="btn-log-today">Log Today</button>
+          <button type="button" class="btn-secondary emergency-trigger" id="emergency-quick">I'm struggling</button>
+        </div>
+      </section>
+
+      <!-- Daily Check-In (panel with trigger for modal) -->
+      <section id="checkin" class="panel" data-panel="checkin">
+        <header class="panel-header">
+          <h2 class="serif-heading">Daily Check-In</h2>
+        </header>
+        <div class="checkin-panel-content">
+          <p class="checkin-panel-desc">Log your fasting, prayer, scripture, and reflection for today.</p>
+          <button type="button" class="btn-primary" id="btn-open-checkin-modal">Log Today</button>
+        </div>
+      </section>
+
+      <!-- Analytics -->
+      <section id="analytics" class="panel" data-panel="analytics">
+        <header class="panel-header">
+          <h2 class="serif-heading">Analytics</h2>
+        </header>
+        <div class="analytics-content">
+          <div class="discipline-score-card">
+            <span class="score-value" id="discipline-score">—</span>
+            <span class="score-label" id="discipline-label">Discipline Score</span>
+          </div>
+          <div class="chart-block">
+            <h3>Streak History</h3>
+            <div class="streak-chart" id="streak-chart"></div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-value" id="weekly-pct">—</span>
+              <span class="stat-label">Weekly completion</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="failure-day">—</span>
+              <span class="stat-label">Hardest day</span>
+            </div>
+          </div>
+          <div class="chart-block">
+            <h3>Mood trends</h3>
+            <div class="mood-chart" id="mood-chart"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reflection Journal -->
+      <section id="journal" class="panel" data-panel="journal">
+        <header class="panel-header">
+          <h2 class="serif-heading">Reflection Journal</h2>
+          <button type="button" class="btn-text" id="btn-export">Export</button>
+        </header>
+        <div class="journal-content">
+          <div class="journal-timeline" id="journal-timeline"></div>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section id="settings" class="panel" data-panel="settings">
+        <header class="panel-header">
+          <h2 class="serif-heading">Settings</h2>
+        </header>
+        <div class="settings-content">
+          <div class="settings-group">
+            <h3>Commitments</h3>
+            <a href="#" class="settings-row" id="edit-commitments">Edit commitments</a>
+          </div>
+          <div class="settings-group">
+            <h3>Appearance</h3>
+            <div class="settings-row">
+              <span>Dark mode</span>
+              <label class="toggle">
+                <input type="checkbox" id="toggle-dark" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h3>Tone</h3>
+            <div class="tone-inline">
+              <button type="button" class="tone-btn small" data-tone="gentle">Gentle</button>
+              <button type="button" class="tone-btn small" data-tone="direct">Direct</button>
+              <button type="button" class="tone-btn small" data-tone="strict">Strict</button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h3>Data</h3>
+            <a href="#" class="settings-row" id="export-data">Export data</a>
+            <a href="#" class="settings-row danger" id="reset-lent">Reset Lent</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Daily Check-In Modal (slide-up) -->
+    <div id="checkin-modal" class="modal hidden">
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-content modal-slide">
+        <div class="modal-header">
+          <h2>Log Today</h2>
+          <button type="button" class="modal-close" aria-label="Close" data-close-modal>&times;</button>
+        </div>
+        <div class="modal-body checkin-form" id="modal-checkin-body">
+          <p class="checkin-date" id="checkin-date"></p>
+          <div class="toggle-group">
+            <div class="toggle-row">
+              <span>Fast kept</span>
+              <label class="toggle">
+                <input type="checkbox" id="toggle-fast" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <span>Prayer completed</span>
+              <label class="toggle">
+                <input type="checkbox" id="toggle-prayer" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <span>Scripture read</span>
+              <label class="toggle">
+                <input type="checkbox" id="toggle-scripture" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <label class="input-label">Mood</label>
+          <div class="mood-selector" id="mood-selector">
+            <button type="button" class="mood-btn" data-mood="peaceful" title="Peaceful">☼</button>
+            <button type="button" class="mood-btn" data-mood="grateful" title="Grateful">♥</button>
+            <button type="button" class="mood-btn" data-mood="neutral" title="Neutral">◎</button>
+            <button type="button" class="mood-btn" data-mood="struggling" title="Struggling">◐</button>
+            <button type="button" class="mood-btn" data-mood="tempted" title="Tempted">◔</button>
+          </div>
+          <label class="input-label">Reflection</label>
+          <textarea id="checkin-reflection" class="input-textarea" placeholder="Today's reflection..." rows="4"></textarea>
+          <button type="button" class="btn-primary" id="btn-save-checkin">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emergency Mode Overlay -->
+    <div id="emergency-overlay" class="emergency-overlay hidden">
+      <div class="emergency-content">
+        <p class="emergency-scripture" id="emergency-scripture"></p>
+        <cite class="emergency-ref" id="emergency-ref"></cite>
+        <div class="emergency-why">
+          <h3>Why you started</h3>
+          <p id="emergency-why-text"></p>
+        </div>
+        <div class="breathing-timer">
+          <div class="breath-circle" id="breath-circle"></div>
+          <p class="breath-label" id="breath-label">Breathe in</p>
+          <span class="breath-countdown" id="breath-countdown">60</span>
+        </div>
+        <button type="button" class="btn-primary" id="emergency-close">Close and Stay Strong</button>
+      </div>
+    </div>
+
+    <!-- Easter Summary -->
+    <div id="easter-summary" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content easter-modal">
+        <h2 class="serif-title">You did it.</h2>
+        <p class="easter-message">40 days complete. May this journey stay with you.</p>
+        <button type="button" class="btn-primary" id="easter-dismiss">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
