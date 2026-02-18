@@ -249,6 +249,10 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+.tab-btn i {
+  pointer-events: none;
+}
+
 .tab-btn:hover,
 .tab-btn:focus-visible {
   color: var(--text);
@@ -261,6 +265,10 @@ body {
 .tab-icon {
   font-size: 1.25rem;
   line-height: 1;
+}
+
+.tab-icon i {
+  font-size: inherit;
 }
 
 .panel {
@@ -423,6 +431,10 @@ body {
   font-size: 1.25rem;
   cursor: pointer;
   transition: all var(--dur) var(--ease);
+}
+
+.icon-btn i {
+  pointer-events: none;
 }
 
 .icon-btn:hover {
@@ -703,9 +715,13 @@ body {
   border: 2px solid var(--sand);
   border-radius: var(--radius-md);
   background: var(--bg-elevated);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   cursor: pointer;
   transition: all var(--dur) var(--ease);
+}
+
+.mood-btn i {
+  pointer-events: none;
 }
 
 .mood-btn:hover {
@@ -1020,11 +1036,15 @@ body {
   justify-content: center;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: var(--text-muted);
   cursor: pointer;
   border-radius: var(--radius-md);
   transition: background var(--dur) var(--ease);
+}
+
+.modal-close i {
+  pointer-events: none;
 }
 
 .modal-close:hover {

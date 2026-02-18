@@ -261,7 +261,7 @@
     const moodChart = document.getElementById('mood-chart');
     moodChart.innerHTML = '';
     const moodMax = Math.max(...Object.values(moodData), 1);
-    const moodLabelsMap = { peaceful: '☼', grateful: '♥', neutral: '◎', struggling: '◐', tempted: '◔' };
+    const moodLabelsMap = { peaceful: 'fa-solid fa-sun', grateful: 'fa-solid fa-heart', neutral: 'fa-regular fa-circle', struggling: 'fa-solid fa-cloud', tempted: 'fa-solid fa-moon' };
     ['peaceful', 'grateful', 'neutral', 'struggling', 'tempted'].forEach((m) => {
       const wrap = document.createElement('div');
       wrap.className = 'mood-bar-wrap';
@@ -272,7 +272,7 @@
       wrap.appendChild(bar);
       const lbl = document.createElement('span');
       lbl.className = 'mood-chart-label';
-      lbl.textContent = moodLabelsMap[m];
+      lbl.innerHTML = `<i class="${moodLabelsMap[m]}"></i>`;
       lbl.title = m;
       wrap.appendChild(lbl);
       moodChart.appendChild(wrap);
@@ -453,6 +453,7 @@
   window.Forty = Forty;
 
   function initMainApp() {
+    window.location.hash = window.location.hash || 'dashboard';
     R.initRouter({
       onRoute(view, panel) {
         const id = panel || view;
@@ -462,11 +463,89 @@
       }
     });
 
-    document.querySelectorAll('.tab-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const tab = btn.dataset.tab;
-        window.location.hash = tab;
-      });
+    document.body.addEventListener('click', (e) => {
+      const tabBtn = e.target.closest('.tab-btn');
+      if (tabBtn && tabBtn.dataset.tab) {
+        e.preventDefault();
+        window.location.hash = tabBtn.dataset.tab;
+        return;
+      }
+      const closeModal = e.target.closest('[data-close-modal]');
+      if (closeModal) {
+        e.preventDefault();
+        closeCheckinModal();
+        return;
+      }
+      const emergencyBtn = e.target.closest('.emergency-trigger');
+      if (emergencyBtn) {
+        e.preventDefault();
+        openEmergency();
+        return;
+      }
+      const moodBtn = e.target.closest('#mood-selector .mood-btn');
+      if (moodBtn) {
+        e.preventDefault();
+        document.querySelectorAll('#mood-selector .mood-btn').forEach((b) => b.classList.remove('selected'));
+        moodBtn.classList.add('selected');
+        return;
+      }
+      const toneBtn = e.target.closest('#settings .tone-btn');
+      if (toneBtn) {
+        e.preventDefault();
+        document.querySelectorAll('#settings .tone-btn').forEach((b) => b.classList.remove('selected'));
+        toneBtn.classList.add('selected');
+        data.toneMode = toneBtn.dataset.tone;
+        S.save(data);
+        return;
+      }
+      if (e.target.id === 'btn-log-today' || e.target.closest('#btn-log-today')) {
+        e.preventDefault();
+        openCheckinModal();
+        return;
+      }
+      if (e.target.id === 'btn-open-checkin-modal' || e.target.closest('#btn-open-checkin-modal')) {
+        e.preventDefault();
+        openCheckinModal();
+        return;
+      }
+      if (e.target.id === 'btn-export' || e.target.closest('#btn-export')) {
+        e.preventDefault();
+        exportData();
+        return;
+      }
+      if (e.target.closest('#export-data')) {
+        e.preventDefault();
+        exportData();
+        return;
+      }
+      if (e.target.closest('#edit-commitments')) {
+        e.preventDefault();
+        editCommitments();
+        return;
+      }
+      if (e.target.closest('#reset-lent')) {
+        e.preventDefault();
+        resetLent();
+        return;
+      }
+      if (e.target.id === 'easter-dismiss' || e.target.closest('#easter-dismiss')) {
+        e.preventDefault();
+        U.hide(document.getElementById('easter-summary'));
+        document.getElementById('easter-summary').classList.add('hidden');
+        return;
+      }
+      if (e.target.id === 'btn-save-checkin' || e.target.closest('#btn-save-checkin')) {
+        e.preventDefault();
+        U.ripple(e, e.target.closest('#btn-save-checkin') || e.target);
+        saveCheckin();
+        closeCheckinModal();
+        return;
+      }
+      if (e.target.id === 'emergency-close' || e.target.closest('#emergency-close')) {
+        e.preventDefault();
+        closeEmergency();
+        return;
+      }
     });
 
     function openCheckinModal() {
@@ -479,69 +558,7 @@
       document.getElementById('checkin-modal').classList.add('hidden');
     }
 
-    document.getElementById('btn-log-today')?.addEventListener('click', openCheckinModal);
-    document.getElementById('btn-open-checkin-modal')?.addEventListener('click', openCheckinModal);
-
-    document.getElementById('btn-save-checkin')?.addEventListener('click', (e) => {
-      U.ripple(e, e.target);
-      saveCheckin();
-      closeCheckinModal();
-    });
-
-    document.querySelectorAll('[data-close-modal]').forEach((el) => {
-      el.addEventListener('click', closeCheckinModal);
-    });
-
-    document.querySelectorAll('.emergency-trigger').forEach((el) => {
-      el.addEventListener('click', openEmergency);
-    });
-
-    document.getElementById('emergency-close')?.addEventListener('click', closeEmergency);
-
-    document.getElementById('emergency-overlay')?.querySelector('.emergency-content')?.addEventListener('click', (e) => {
-      if (e.target.id === 'emergency-close') closeEmergency();
-    });
-
-    document.getElementById('btn-export')?.addEventListener('click', exportData);
-    document.getElementById('export-data')?.addEventListener('click', (e) => { e.preventDefault(); exportData(); });
-
     document.getElementById('toggle-dark')?.addEventListener('change', toggleDark);
-
-    document.getElementById('reset-lent')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      resetLent();
-    });
-
-    document.getElementById('edit-commitments')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      editCommitments();
-    });
-
-    document.getElementById('easter-dismiss')?.addEventListener('click', () => {
-      U.hide(document.getElementById('easter-summary'));
-      document.getElementById('easter-summary').classList.add('hidden');
-    });
-
-    document.querySelectorAll('#mood-selector .mood-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#mood-selector .mood-btn').forEach((b) => b.classList.remove('selected'));
-        btn.classList.add('selected');
-      });
-    });
-
-    document.querySelectorAll('#settings .tone-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#settings .tone-btn').forEach((b) => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        data.toneMode = btn.dataset.tone;
-        S.save(data);
-      });
-    });
-
-    // Ripple on primary buttons
-    document.querySelectorAll('.btn-primary').forEach((btn) => {
-      btn.addEventListener('click', (e) => U.ripple(e, btn));
-    });
 
     renderDashboard();
     checkEasterSummary();

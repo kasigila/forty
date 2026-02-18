@@ -58,18 +58,19 @@ function formatDate(dateStr) {
 }
 
 /**
- * Mood icon map
+ * Mood icon map (Font Awesome classes)
  */
 const MOOD_ICONS = {
-  peaceful: '☼',
-  grateful: '♥',
-  neutral: '◎',
-  struggling: '◐',
-  tempted: '◔'
+  peaceful: 'fa-solid fa-sun',
+  grateful: 'fa-solid fa-heart',
+  neutral: 'fa-regular fa-circle',
+  struggling: 'fa-solid fa-cloud',
+  tempted: 'fa-solid fa-moon'
 };
 
 function getMoodIcon(mood) {
-  return MOOD_ICONS[mood] || '◎';
+  const cls = MOOD_ICONS[mood] || MOOD_ICONS.neutral;
+  return `<i class="${cls}"></i>`;
 }
 
 /**

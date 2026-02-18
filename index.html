@@ -15,6 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -74,23 +75,23 @@
       <!-- Tab Bar -->
       <nav class="tab-bar">
         <button type="button" class="tab-btn active" data-tab="dashboard">
-          <span class="tab-icon">◉</span>
+          <span class="tab-icon"><i class="fa-solid fa-house"></i></span>
           <span class="tab-label">Home</span>
         </button>
         <button type="button" class="tab-btn" data-tab="checkin">
-          <span class="tab-icon">✓</span>
+          <span class="tab-icon"><i class="fa-solid fa-pen-to-square"></i></span>
           <span class="tab-label">Log</span>
         </button>
         <button type="button" class="tab-btn" data-tab="analytics">
-          <span class="tab-icon">◇</span>
+          <span class="tab-icon"><i class="fa-solid fa-chart-line"></i></span>
           <span class="tab-label">Stats</span>
         </button>
         <button type="button" class="tab-btn" data-tab="journal">
-          <span class="tab-icon">◎</span>
+          <span class="tab-icon"><i class="fa-solid fa-book-open"></i></span>
           <span class="tab-label">Journal</span>
         </button>
         <button type="button" class="tab-btn" data-tab="settings">
-          <span class="tab-icon">⚙</span>
+          <span class="tab-icon"><i class="fa-solid fa-gear"></i></span>
           <span class="tab-label">Settings</span>
         </button>
       </nav>
@@ -99,7 +100,7 @@
       <section id="dashboard" class="panel active" data-panel="dashboard">
         <header class="panel-header">
           <h1 class="serif-title">Forty</h1>
-          <button type="button" class="icon-btn emergency-trigger" title="I'm struggling">✦</button>
+          <button type="button" class="icon-btn emergency-trigger" title="I'm struggling"><i class="fa-solid fa-hand-holding-heart"></i></button>
         </header>
         <div class="dashboard-content">
           <div class="day-counter">
@@ -223,7 +224,7 @@
       <div class="modal-content modal-slide">
         <div class="modal-header">
           <h2>Log Today</h2>
-          <button type="button" class="modal-close" aria-label="Close" data-close-modal>&times;</button>
+          <button type="button" class="modal-close" aria-label="Close" data-close-modal><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="modal-body checkin-form" id="modal-checkin-body">
           <p class="checkin-date" id="checkin-date"></p>
@@ -252,11 +253,11 @@
           </div>
           <label class="input-label">Mood</label>
           <div class="mood-selector" id="mood-selector">
-            <button type="button" class="mood-btn" data-mood="peaceful" title="Peaceful">☼</button>
-            <button type="button" class="mood-btn" data-mood="grateful" title="Grateful">♥</button>
-            <button type="button" class="mood-btn" data-mood="neutral" title="Neutral">◎</button>
-            <button type="button" class="mood-btn" data-mood="struggling" title="Struggling">◐</button>
-            <button type="button" class="mood-btn" data-mood="tempted" title="Tempted">◔</button>
+            <button type="button" class="mood-btn" data-mood="peaceful" title="Peaceful"><i class="fa-solid fa-sun"></i></button>
+            <button type="button" class="mood-btn" data-mood="grateful" title="Grateful"><i class="fa-solid fa-heart"></i></button>
+            <button type="button" class="mood-btn" data-mood="neutral" title="Neutral"><i class="fa-regular fa-circle"></i></button>
+            <button type="button" class="mood-btn" data-mood="struggling" title="Struggling"><i class="fa-solid fa-cloud"></i></button>
+            <button type="button" class="mood-btn" data-mood="tempted" title="Tempted"><i class="fa-solid fa-moon"></i></button>
           </div>
           <label class="input-label">Reflection</label>
           <textarea id="checkin-reflection" class="input-textarea" placeholder="Today's reflection..." rows="4"></textarea>
