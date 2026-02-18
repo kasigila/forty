@@ -10,6 +10,7 @@
   const A = window.FortyAnalytics;
   const U = window.FortyUI;
   const R = window.FortyRouter;
+  const C = window.FortyContent || {};
 
   // ═══════════════════════════════════════════════════════════
   // SCRIPTURES (40 verses)
@@ -111,6 +112,13 @@
     document.querySelectorAll('[data-next]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         U.ripple(e, btn);
+        if (currentStep === 1) {
+          const dateVal = document.getElementById('start-date')?.value;
+          if (!dateVal) {
+            U.toast('Please select a start date', 'error');
+            return;
+          }
+        }
         if (currentStep === STEPS.length - 1) {
           completeOnboarding();
         } else {
@@ -193,6 +201,32 @@
 
     if (scripture && scriptureTextEl) scriptureTextEl.textContent = scripture.text;
     if (scripture && scriptureRefEl) scriptureRefEl.textContent = scripture.ref;
+
+    const promptEl = document.getElementById('daily-prompt');
+    const wisdomEl = document.getElementById('wisdom-text');
+    if (promptEl && C.DAILY_PROMPTS) {
+      const promptIdx = Math.min((day ? day - 1 : 0), C.DAILY_PROMPTS.length - 1);
+      promptEl.textContent = C.DAILY_PROMPTS[promptIdx] || '';
+    }
+    if (wisdomEl && C.WISDOM_OF_THE_DAY) {
+      const wisdomIdx = Math.min((day ? day - 1 : 0), C.WISDOM_OF_THE_DAY.length - 1);
+      wisdomEl.textContent = C.WISDOM_OF_THE_DAY[wisdomIdx] || '';
+    }
+
+    const intentions = data.prayerIntentions || [];
+    const compactEl = document.getElementById('prayer-intentions-compact');
+    if (compactEl) {
+      if (intentions.length === 0) {
+        compactEl.innerHTML = '';
+        compactEl.style.display = 'none';
+      } else {
+        compactEl.style.display = 'block';
+        compactEl.innerHTML = '<h3 class="prompt-heading">Prayer intentions</h3><ul class="intentions-list">' +
+          intentions.slice(0, 3).map((i) => '<li>' + escapeHtml(i) + '</li>').join('') +
+          (intentions.length > 3 ? '<li class="muted">+' + (intentions.length - 3) + ' more</li>' : '') + '</ul>';
+      }
+    }
+
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -203,13 +237,18 @@
     const today = S.todayString();
     const log = S.getOrCreateLogForToday(data);
 
-    document.getElementById('checkin-date').textContent = U.formatDate(today);
-    document.getElementById('toggle-fast').checked = log.fast;
-    document.getElementById('toggle-prayer').checked = log.prayer;
-    document.getElementById('toggle-scripture').checked = log.scripture;
-    document.getElementById('checkin-reflection').value = log.reflection || '';
+    const dateEl = document.getElementById('checkin-date');
+    const fastEl = document.getElementById('toggle-fast');
+    const prayerEl = document.getElementById('toggle-prayer');
+    const scriptureEl = document.getElementById('toggle-scripture');
+    const reflectionEl = document.getElementById('checkin-reflection');
+    if (dateEl) dateEl.textContent = U.formatDate(today);
+    if (fastEl) fastEl.checked = log.fast;
+    if (prayerEl) prayerEl.checked = log.prayer;
+    if (scriptureEl) scriptureEl.checked = log.scripture;
+    if (reflectionEl) reflectionEl.value = log.reflection || '';
 
-    document.querySelectorAll('.mood-btn').forEach((btn) => {
+    document.querySelectorAll('#mood-selector .mood-btn').forEach((btn) => {
       btn.classList.toggle('selected', btn.dataset.mood === log.mood);
     });
   }
@@ -228,9 +267,13 @@
     };
 
     const result = S.saveLog(data, log);
-    if (!result.ok) return;
+    if (!result.ok) {
+      U.toast('Could not save. Please try again.', 'error');
+      return;
+    }
 
     data = S.load();
+    U.toast('Check-in saved');
     const newStreak = A.computeStreak(data);
 
     U.successAnimation(document.getElementById('btn-save-checkin'));
@@ -238,6 +281,39 @@
       document.querySelector('.streak-display')?.classList.add('broken');
     }
     renderDashboard();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // CALENDAR
+  // ═══════════════════════════════════════════════════════════
+  function renderCalendar() {
+    data = S.load();
+    const start = S.parseDate(data.startDate);
+    const grid = document.getElementById('calendar-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!start) {
+      grid.innerHTML = '<p class="muted">Set your start date in onboarding.</p>';
+      return;
+    }
+    const lit = C.getLiturgicalDates ? C.getLiturgicalDates(data.startDate) : { keyDates: [] };
+    const keyDateMap = {};
+    (lit.keyDates || []).forEach((kd) => { keyDateMap[kd.date] = kd.label; });
+    for (let i = 0; i < 40; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const log = S.getLogForDate(data, dateStr);
+      const dayNum = i + 1;
+      const isToday = dateStr === S.todayString();
+      const isFuture = d > new Date();
+      const label = keyDateMap[dateStr] || 'Day ' + dayNum;
+      const cell = document.createElement('div');
+      cell.className = 'calendar-cell' + (isToday ? ' today' : '') + (isFuture ? ' future' : '') + (log && (log.fast || log.prayer || log.scripture) ? ' logged' : '');
+      cell.title = label + (log ? ' – logged' : '');
+      cell.innerHTML = '<span class="cal-day">' + dayNum + '</span><span class="cal-date">' + d.getDate() + '</span>' + (keyDateMap[dateStr] ? '<span class="cal-key">' + escapeHtml(keyDateMap[dateStr]) + '</span>' : '');
+      grid.appendChild(cell);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -303,6 +379,26 @@
       wrap.appendChild(lbl);
       moodChart.appendChild(wrap);
     });
+
+    const moodDiscipline = A.moodVsDiscipline ? A.moodVsDiscipline(data) : null;
+    const moodDisciplineEl = document.getElementById('mood-discipline-chart');
+    if (moodDisciplineEl) {
+      moodDisciplineEl.innerHTML = '';
+      if (moodDiscipline && Object.keys(moodDiscipline).length > 0) {
+        Object.entries(moodDiscipline).forEach(([mood, pct]) => {
+          const wrap = document.createElement('div');
+          wrap.className = 'mood-disc-wrap';
+          wrap.innerHTML = '<span class="mood-disc-label">' + mood + '</span><div class="mood-disc-bar-wrap"><div class="mood-disc-bar" style="width:' + pct + '%"></div></div><span class="mood-disc-pct">' + pct + '%</span>';
+          moodDisciplineEl.appendChild(wrap);
+        });
+      } else {
+        moodDisciplineEl.innerHTML = '<p class="muted">Log check-ins with mood to see correlations.</p>';
+      }
+    }
+
+    const bestTime = A.bestLogTime ? A.bestLogTime(data) : null;
+    const bestTimeEl = document.getElementById('best-time');
+    if (bestTimeEl) bestTimeEl.textContent = bestTime || '—';
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -323,12 +419,14 @@
       entry.className = 'journal-entry';
       entry.dataset.date = log.date;
       const hasReflection = !!(log.reflection && log.reflection.trim());
+      const scriptureRef = log.scriptureRef ? '<cite class="journal-scripture-ref">' + escapeHtml(log.scriptureRef) + '</cite>' : '';
       const snippetText = hasReflection ? escapeHtml((log.reflection || '').slice(0, 120)) + ((log.reflection || '').length > 120 ? '…' : '') : 'No reflection written';
       entry.innerHTML = `
         <div class="journal-entry-header">
           <span class="journal-entry-date">${U.formatDate(log.date)}</span>
           <span class="journal-entry-mood">${U.getMoodIcon(log.mood)}</span>
         </div>
+        ${scriptureRef}
         <p class="journal-entry-snippet ${!hasReflection ? 'muted' : ''}">${snippetText}</p>
         <div class="journal-entry-expanded hidden"></div>
       `;
@@ -368,11 +466,13 @@
     document.getElementById('emergency-why-text').textContent = data.whyText || 'Remember why you began.';
     U.show(document.getElementById('emergency-overlay'));
     document.getElementById('emergency-overlay').classList.remove('hidden');
+    U.lockBodyScroll(true);
     startBreathingTimer();
   }
 
   function closeEmergency() {
     document.getElementById('emergency-overlay').classList.add('hidden');
+    U.lockBodyScroll(false);
     stopBreathingTimer();
   }
 
@@ -417,12 +517,20 @@
   // ═══════════════════════════════════════════════════════════
   function renderSettings() {
     data = S.load();
-    document.getElementById('toggle-dark').checked = data.theme === 'dark';
-    document.getElementById('settings-giving-up').textContent = data.commitments?.givingUp ? 'Giving up: ' + data.commitments.givingUp : 'Not set';
-    document.getElementById('settings-adding').textContent = data.commitments?.adding ? 'Adding: ' + data.commitments.adding : 'Not set';
+    const toggleDarkEl = document.getElementById('toggle-dark');
+    const givingUpEl = document.getElementById('settings-giving-up');
+    const addingEl = document.getElementById('settings-adding');
+    const reminderEl = document.getElementById('reminder-time');
+    const fastingEl = document.getElementById('fasting-schedule');
+    if (toggleDarkEl) toggleDarkEl.checked = data.theme === 'dark';
+    if (givingUpEl) givingUpEl.textContent = data.commitments?.givingUp ? 'Giving up: ' + data.commitments.givingUp : 'Not set';
+    if (addingEl) addingEl.textContent = data.commitments?.adding ? 'Adding: ' + data.commitments.adding : 'Not set';
+    if (reminderEl) reminderEl.value = data.reminderTime || '';
+    if (fastingEl) fastingEl.value = data.fastingSchedule || 'all';
     document.querySelectorAll('#settings .tone-btn').forEach((btn) => {
       btn.classList.toggle('selected', btn.dataset.tone === data.toneMode);
     });
+    renderPrayerIntentions();
   }
 
   function toggleDark() {
@@ -444,12 +552,15 @@
     data = S.load();
     document.getElementById('edit-giving-up').value = data.commitments?.givingUp || '';
     document.getElementById('edit-adding').value = data.commitments?.adding || '';
-    U.show(document.getElementById('edit-commitments-modal'));
-    document.getElementById('edit-commitments-modal').classList.remove('hidden');
+    const modal = document.getElementById('edit-commitments-modal');
+    U.show(modal);
+    modal.classList.remove('hidden');
+    U.lockBodyScroll(true);
   }
   function closeEditCommitmentsModal() {
     U.hide(document.getElementById('edit-commitments-modal'));
     document.getElementById('edit-commitments-modal').classList.add('hidden');
+    U.lockBodyScroll(false);
   }
   function saveCommitments() {
     data = S.load();
@@ -461,9 +572,11 @@
     closeEditCommitmentsModal();
     renderSettings();
     renderDashboard();
+    U.toast('Commitments updated');
   }
 
   function openJournalEntryModal() {
+    U.lockBodyScroll(true);
     data = S.load();
     const start = S.parseDate(data.startDate);
     const dateInput = document.getElementById('journal-entry-date');
@@ -476,27 +589,211 @@
       dateInput.max = max.toISOString().slice(0, 10);
     }
     document.getElementById('journal-entry-reflection').value = '';
+    const scriptureInput = document.getElementById('journal-entry-scripture');
+    if (scriptureInput) scriptureInput.value = '';
     document.querySelectorAll('#journal-mood-selector .mood-btn').forEach((b) => b.classList.remove('selected'));
     const neutral = document.querySelector('#journal-mood-selector .mood-btn[data-mood="neutral"]');
     if (neutral) neutral.classList.add('selected');
-    U.show(document.getElementById('journal-entry-modal'));
-    document.getElementById('journal-entry-modal').classList.remove('hidden');
+    const jModal = document.getElementById('journal-entry-modal');
+    U.show(jModal);
+    jModal.classList.remove('hidden');
   }
   function closeJournalEntryModal() {
     U.hide(document.getElementById('journal-entry-modal'));
     document.getElementById('journal-entry-modal').classList.add('hidden');
+    U.lockBodyScroll(false);
   }
   function saveJournalEntry() {
     const dateStr = document.getElementById('journal-entry-date').value;
     const reflection = document.getElementById('journal-entry-reflection').value.trim();
+    const scriptureRef = document.getElementById('journal-entry-scripture')?.value?.trim() || '';
     const moodBtn = document.querySelector('#journal-mood-selector .mood-btn.selected');
     const mood = moodBtn?.dataset.mood || 'neutral';
     if (!dateStr) return;
     data = S.load();
-    if (S.saveJournalEntry(data, dateStr, reflection, mood)) {
+    if (S.saveJournalEntry(data, dateStr, reflection, mood, scriptureRef || undefined)) {
       closeJournalEntryModal();
       renderJournal();
+      U.toast('Journal entry saved');
+    } else {
+      U.toast('Could not save entry.', 'error');
     }
+  }
+
+  function saveVerseToJournal() {
+    const scripture = getScriptureForDay(S.currentDay(data));
+    if (!scripture) return;
+    const today = S.todayString();
+    data = S.load();
+    const existing = S.getLogForDate(data, today);
+    const reflection = (existing?.reflection || '').trim();
+    const newReflection = reflection ? reflection + '\n\n— ' + scripture.text + ' (' + scripture.ref + ')' : '— ' + scripture.text + ' (' + scripture.ref + ')';
+    if (S.saveJournalEntry(data, today, newReflection, existing?.mood || 'neutral', scripture.ref)) {
+      U.toast('Verse saved to journal');
+      renderJournal();
+    }
+  }
+
+  function openStationsModal() {
+    if (!C.STATIONS) return;
+    const body = document.getElementById('stations-body');
+    body.innerHTML = C.STATIONS.map((s) => '<div class="station-item"><span class="station-num">' + s.n + '</span><h4>' + escapeHtml(s.title) + '</h4><p class="station-prayer">' + escapeHtml(s.prayer) + '</p></div>').join('');
+    const modal = document.getElementById('stations-modal');
+    U.show(modal);
+    modal.classList.remove('hidden');
+    U.lockBodyScroll(true);
+  }
+
+  function closeStationsModal() {
+    document.getElementById('stations-modal').classList.add('hidden');
+    U.lockBodyScroll(false);
+  }
+
+  function checkMilestones() {
+    const day = S.currentDay(data);
+    const seen = JSON.parse(localStorage.getItem('forty_milestones_seen') || '[]');
+    const milestones = [10, 20, 30];
+    const hit = milestones.find((m) => m === day && !seen.includes(m));
+    if (!hit) return;
+    seen.push(hit);
+    localStorage.setItem('forty_milestones_seen', JSON.stringify(seen));
+    const titles = { 10: 'One quarter done', 20: 'Halfway there', 30: 'Three quarters complete' };
+    const msgs = { 10: 'You\'ve shown up for 10 days. Keep going.', 20: '20 days of faithfulness. You\'re halfway through.', 30: '30 days. You\'re almost there.' };
+    document.getElementById('milestone-title').textContent = titles[hit];
+    document.getElementById('milestone-message').textContent = msgs[hit];
+    const modal = document.getElementById('milestone-modal');
+    U.show(modal);
+    modal.classList.remove('hidden');
+    U.lockBodyScroll(true);
+  }
+
+  function closeMilestoneModal() {
+    document.getElementById('milestone-modal').classList.add('hidden');
+    U.lockBodyScroll(false);
+  }
+
+  function openShareModal() {
+    data = S.load();
+    const day = S.currentDay(data);
+    const { score, label } = A.disciplineScore(data);
+    const streak = A.computeStreak(data);
+    const total = (data.logs || []).length;
+    const text = `Forty — Lent Companion\n\nDay ${day || 0} of 40\nStreak: ${streak} days\nDiscipline: ${score ?? '—'}% (${label || ''})\nCheck-ins: ${total}\n\nTracked with Forty — A Lent Companion`;
+    document.getElementById('share-text').value = text;
+    const modal = document.getElementById('share-modal');
+    U.show(modal);
+    modal.classList.remove('hidden');
+    U.lockBodyScroll(true);
+  }
+
+  function closeShareModal() {
+    document.getElementById('share-modal').classList.add('hidden');
+    U.lockBodyScroll(false);
+  }
+
+  function copyShare() {
+    const ta = document.getElementById('share-text');
+    ta.select();
+    document.execCommand('copy');
+    U.toast('Copied to clipboard');
+  }
+
+  function addPrayerIntention() {
+    const input = document.getElementById('prayer-intention-input');
+    const text = input?.value?.trim();
+    if (!text) return;
+    data = S.load();
+    data.prayerIntentions = [...(data.prayerIntentions || []), text];
+    S.save(data);
+    input.value = '';
+    renderSettings();
+    renderDashboard();
+    U.toast('Prayer intention added');
+  }
+
+  function removePrayerIntention(idx) {
+    data = S.load();
+    const list = [...(data.prayerIntentions || [])];
+    list.splice(idx, 1);
+    data.prayerIntentions = list;
+    S.save(data);
+    renderSettings();
+    renderDashboard();
+    U.toast('Prayer intention removed');
+  }
+
+  function renderPrayerIntentions() {
+    const list = document.getElementById('prayer-intentions-list');
+    if (!list) return;
+    const intentions = data.prayerIntentions || [];
+    list.innerHTML = intentions.length === 0 ? '<p class="muted">No prayer intentions yet.</p>' : intentions.map((item, i) => '<div class="prayer-item"><span>' + escapeHtml(item) + '</span><button type="button" class="btn-text btn-remove" data-prayer-idx="' + i + '" aria-label="Remove">×</button></div>').join('');
+  }
+
+  function importData() {
+    const input = document.getElementById('import-file-input');
+    input.value = '';
+    input.click();
+  }
+
+  function handleImport(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const imported = JSON.parse(reader.result);
+        data = S.load();
+        const merged = S.mergeImport(data, imported);
+        if (!merged) {
+          U.toast('Invalid import file.', 'error');
+          return;
+        }
+        S.save(merged);
+        data = merged;
+        renderDashboard();
+        renderJournal();
+        renderSettings();
+        renderAnalytics();
+        renderCalendar();
+        U.toast('Data imported successfully');
+      } catch (_) {
+        U.toast('Could not parse import file.', 'error');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function setupReminder() {
+    const timeEl = document.getElementById('reminder-time');
+    if (!timeEl) return;
+    data = S.load();
+    timeEl.value = data.reminderTime || '';
+    const check = () => {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const t = data.reminderTime;
+      if (t && t === h + ':' + m) {
+        if (Notification.permission === 'granted') {
+          new Notification('Forty — Lent Companion', { body: 'Time for your daily check-in.', icon: './assets/icons/icon-192.png' });
+        }
+        data.lastReminder = new Date().toISOString().slice(0, 10);
+        S.save(data);
+      }
+    };
+    setInterval(check, 60000);
+  }
+
+  function saveReminderTime() {
+    data = S.load();
+    data.reminderTime = document.getElementById('reminder-time')?.value || null;
+    S.save(data);
+  }
+
+  function saveFastingSchedule() {
+    data = S.load();
+    data.fastingSchedule = document.getElementById('fasting-schedule')?.value || 'all';
+    S.save(data);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -523,7 +820,8 @@
 
   function onPanelChange(panelId) {
     if (panelId === 'dashboard') renderDashboard();
-    if (panelId === 'checkin') { renderCheckinPanel(); }
+    if (panelId === 'checkin') renderCheckinPanel();
+    if (panelId === 'calendar') renderCalendar();
     if (panelId === 'analytics') renderAnalytics();
     if (panelId === 'journal') renderJournal();
     if (panelId === 'settings') renderSettings();
@@ -535,8 +833,10 @@
   function checkEasterSummary() {
     const day = S.currentDay(data);
     if (day === 40) {
-      U.show(document.getElementById('easter-summary'));
-      document.getElementById('easter-summary').classList.remove('hidden');
+      const easter = document.getElementById('easter-summary');
+      U.show(easter);
+      easter.classList.remove('hidden');
+      U.lockBodyScroll(true);
     }
   }
 
@@ -570,7 +870,7 @@
     R.initRouter({
       onRoute(view, panel) {
         const id = panel || view;
-        if (['dashboard', 'checkin', 'analytics', 'journal', 'settings'].includes(id)) {
+        if (['dashboard', 'checkin', 'calendar', 'analytics', 'journal', 'settings'].includes(id)) {
           Forty.setActivePanel(id);
         }
       }
@@ -610,6 +910,57 @@
         S.save(data);
         return;
       }
+      if (e.target.id === 'btn-save-verse' || e.target.closest('#btn-save-verse')) {
+        e.preventDefault();
+        saveVerseToJournal();
+        return;
+      }
+      if (e.target.id === 'btn-stations' || e.target.closest('#btn-stations')) {
+        e.preventDefault();
+        openStationsModal();
+        return;
+      }
+      if (e.target.closest('[data-close-stations]')) {
+        e.preventDefault();
+        closeStationsModal();
+        return;
+      }
+      if (e.target.closest('[data-close-milestone]') || e.target.id === 'milestone-dismiss') {
+        e.preventDefault();
+        closeMilestoneModal();
+        return;
+      }
+      if (e.target.id === 'btn-share-completion' || e.target.closest('#btn-share-completion')) {
+        e.preventDefault();
+        openShareModal();
+        return;
+      }
+      if (e.target.closest('[data-close-share]')) {
+        e.preventDefault();
+        closeShareModal();
+        return;
+      }
+      if (e.target.id === 'btn-copy-share' || e.target.closest('#btn-copy-share')) {
+        e.preventDefault();
+        copyShare();
+        return;
+      }
+      if (e.target.id === 'btn-add-prayer' || e.target.closest('#btn-add-prayer')) {
+        e.preventDefault();
+        addPrayerIntention();
+        return;
+      }
+      const prayerRemove = e.target.closest('[data-prayer-idx]');
+      if (prayerRemove) {
+        e.preventDefault();
+        removePrayerIntention(parseInt(prayerRemove.dataset.prayerIdx, 10));
+        return;
+      }
+      if (e.target.id === 'import-data' || e.target.closest('#import-data')) {
+        e.preventDefault();
+        importData();
+        return;
+      }
       if (e.target.id === 'btn-log-today' || e.target.closest('#btn-log-today')) {
         e.preventDefault();
         openCheckinModal();
@@ -625,7 +976,7 @@
         exportData();
         return;
       }
-      if (e.target.closest('#export-data')) {
+      if (e.target.id === 'export-data' || e.target.closest('#export-data')) {
         e.preventDefault();
         exportData();
         return;
@@ -673,9 +1024,10 @@
         e.preventDefault();
         U.hide(document.getElementById('easter-summary'));
         document.getElementById('easter-summary').classList.add('hidden');
+        U.lockBodyScroll(false);
         return;
       }
-      if (e.target.closest('#reset-lent')) {
+      if (e.target.id === 'reset-lent' || e.target.closest('#reset-lent')) {
         e.preventDefault();
         resetLent();
         return;
@@ -696,20 +1048,37 @@
 
     function openCheckinModal() {
       renderCheckin();
-      U.show(document.getElementById('checkin-modal'));
-      document.getElementById('checkin-modal').classList.remove('hidden');
+      const modal = document.getElementById('checkin-modal');
+      U.show(modal);
+      modal.classList.remove('hidden');
+      U.lockBodyScroll(true);
     }
     function closeCheckinModal() {
       U.hide(document.getElementById('checkin-modal'));
       document.getElementById('checkin-modal').classList.add('hidden');
+      U.lockBodyScroll(false);
     }
 
     document.body.addEventListener('change', (e) => {
       if (e.target.id === 'toggle-dark') toggleDark();
+      if (e.target.id === 'reminder-time') {
+        saveReminderTime();
+        if (e.target.value && 'Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission().catch(() => {});
+        }
+      }
+      if (e.target.id === 'fasting-schedule') saveFastingSchedule();
+    });
+
+    document.getElementById('import-file-input')?.addEventListener('change', handleImport);
+
+    document.getElementById('prayer-intention-input')?.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); addPrayerIntention(); }
     });
 
     renderDashboard();
     checkEasterSummary();
+    checkMilestones();
 
     // PWA
     if ('serviceWorker' in navigator) {

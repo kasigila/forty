@@ -5,12 +5,14 @@ A spiritual discipline system for Lent. Track fasting, prayer, and daily reflect
 ## Features
 
 - **Onboarding** — Set start date, commitments (giving up / adding), your “why,” and tone preference
-- **Dashboard** — Day counter, streak, daily scripture, quick log
+- **Dashboard** — Day counter, streak, daily scripture, daily prompt, wisdom, prayer intentions
 - **Daily Check-In** — Log fast, prayer, scripture, mood, and reflection
-- **Analytics** — Discipline score, streak history, weekly completion, mood trends
-- **Reflection Journal** — Timeline of entries with expandable full text
+- **Calendar** — 40-day grid with liturgical dates
+- **Analytics** — Discipline score, streak history, mood vs discipline, best time to log
+- **Reflection Journal** — Timeline with scripture journaling, export
 - **Emergency Mode** — Scripture, “why” reminder, 60-second breathing timer
-- **Settings** — Edit commitments, dark mode, tone, export, reset
+- **Stations of the Cross** — 14 stations with prayers
+- **Settings** — Prayer intentions, reminders, fasting schedule, import/export, share, dark mode, tone, reset
 
 ## Tech
 

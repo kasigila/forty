@@ -15,7 +15,11 @@ const DEFAULT_DATA = {
   toneMode: 'gentle',
   logs: [],
   streak: 0,
-  theme: 'light'
+  theme: 'light',
+  prayerIntentions: [],
+  reminderTime: null,
+  fastingSchedule: 'all',
+  journalEntries: []
 };
 
 /**
@@ -46,7 +50,9 @@ function load() {
     return {
       ...DEFAULT_DATA,
       ...data,
-      commitments: { ...DEFAULT_DATA.commitments, ...(data.commitments || {}) }
+      commitments: { ...DEFAULT_DATA.commitments, ...(data.commitments || {}) },
+      prayerIntentions: data.prayerIntentions || [],
+      journalEntries: data.journalEntries || []
     };
   } catch (e) {
     return { ...JSON.parse(JSON.stringify(DEFAULT_DATA)) };
@@ -125,9 +131,10 @@ function saveLog(data, log) {
   if (log.date !== today) return { ok: false, reason: 'locked' };
 
   const logs = [...(data.logs || [])];
+  const logWithTime = { ...log, loggedAt: new Date().toISOString() };
   const idx = logs.findIndex((l) => l.date === log.date);
-  if (idx >= 0) logs[idx] = log;
-  else logs.push(log);
+  if (idx >= 0) logs[idx] = logWithTime;
+  else logs.push(logWithTime);
 
   logs.sort((a, b) => (a.date > b.date ? -1 : 1));
   return save({ ...data, logs }) ? { ok: true } : { ok: false, reason: 'save' };
@@ -135,16 +142,41 @@ function saveLog(data, log) {
 
 /**
  * Save or update a journal entry (reflection) for any date
+ * Optional: scriptureRef for scripture journaling
  */
-function saveJournalEntry(data, dateStr, reflection, mood) {
+function saveJournalEntry(data, dateStr, reflection, mood, scriptureRef) {
   const logs = [...(data.logs || [])];
   const idx = logs.findIndex((l) => l.date === dateStr);
   const base = idx >= 0 ? { ...logs[idx] } : { date: dateStr, fast: false, prayer: false, scripture: false, mood: 'neutral', reflection: '' };
   const entry = { ...base, date: dateStr, reflection: (reflection || '').trim(), mood: mood || base.mood };
+  if (scriptureRef) entry.scriptureRef = scriptureRef;
   if (idx >= 0) logs[idx] = entry;
   else logs.push(entry);
   logs.sort((a, b) => (a.date > b.date ? -1 : 1));
   return save({ ...data, logs });
+}
+
+/**
+ * Merge imported data with existing (for import flow)
+ */
+function mergeImport(existingData, imported) {
+  if (!imported || typeof imported !== 'object') return null;
+  const merged = { ...existingData };
+  if (imported.startDate) merged.startDate = imported.startDate;
+  if (imported.commitments) merged.commitments = { ...(merged.commitments || {}), ...imported.commitments };
+  if (imported.whyText) merged.whyText = imported.whyText;
+  if (Array.isArray(imported.logs) && imported.logs.length > 0) {
+    const existingDates = new Set((merged.logs || []).map((l) => l.date));
+    imported.logs.forEach((l) => {
+      if (!existingDates.has(l.date)) {
+        merged.logs = merged.logs || [];
+        merged.logs.push(l);
+        existingDates.add(l.date);
+      }
+    });
+    if (merged.logs) merged.logs.sort((a, b) => (a.date > b.date ? -1 : 1));
+  }
+  return merged;
 }
 
 /**
@@ -171,6 +203,7 @@ window.FortyStorage = {
   getOrCreateLogForToday,
   saveLog,
   saveJournalEntry,
+  mergeImport,
   reset,
   DEFAULT_DATA
 };

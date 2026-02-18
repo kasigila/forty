@@ -37,11 +37,13 @@ function setActivePanel(panelId) {
   document.querySelectorAll('[data-panel]').forEach((p) => {
     p.classList.remove('active');
     p.hidden = true;
+    p.setAttribute('aria-hidden', 'true');
   });
   const panel = document.querySelector(`[data-panel="${panelId}"]`);
   if (panel) {
     panel.classList.add('active');
     panel.hidden = false;
+    panel.setAttribute('aria-hidden', 'false');
   }
 
   document.querySelectorAll('.tab-btn').forEach((b) => {
@@ -94,6 +96,31 @@ function successAnimation(el) {
   setTimeout(() => el.classList.remove('success-animate'), 350);
 }
 
+/**
+ * Show toast notification
+ */
+function toast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toastEl = document.createElement('div');
+  toastEl.className = `toast toast-${type}`;
+  toastEl.textContent = message;
+  container.appendChild(toastEl);
+  requestAnimationFrame(() => toastEl.classList.add('toast-visible'));
+  setTimeout(() => {
+    toastEl.classList.remove('toast-visible');
+    setTimeout(() => toastEl.remove(), 300);
+  }, 2500);
+}
+
+/**
+ * Lock/unlock body scroll
+ */
+function lockBodyScroll(lock) {
+  document.body.style.overflow = lock ? 'hidden' : '';
+  document.body.style.touchAction = lock ? 'none' : '';
+}
+
 window.FortyUI = {
   ripple,
   show,
@@ -102,5 +129,7 @@ window.FortyUI = {
   formatDate,
   getMoodIcon,
   successAnimation,
+  toast,
+  lockBodyScroll,
   MOOD_ICONS
 };

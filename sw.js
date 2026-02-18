@@ -3,7 +3,7 @@
  * Provides offline support and caching for PWA deployment
  */
 
-const CACHE_NAME = 'forty-v1';
+const CACHE_NAME = 'forty-v2';
 // Relative to SW location for portability (works at / or /forty/)
 const STATIC_ASSETS = [
   './',
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   './styles.css',
   './manifest.json',
   './js/app.js',
+  './js/content.js',
   './js/router.js',
   './js/storage.js',
   './js/analytics.js',

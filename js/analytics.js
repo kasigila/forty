@@ -3,7 +3,9 @@
  * Discipline score, streak, completion %, mood trends
  */
 
-const { load, todayString, parseDate } = window.FortyStorage || {};
+const S = window.FortyStorage || {};
+const parseDate = S.parseDate || (() => null);
+const todayString = S.todayString || (() => new Date().toISOString().slice(0, 10));
 
 /**
  * Discipline Score =
@@ -153,11 +155,53 @@ function moodTrendData(data) {
   return counts;
 }
 
+/**
+ * Mood vs discipline: avg discipline score when in each mood
+ */
+function moodVsDiscipline(data) {
+  const logs = (data.logs || []).filter((l) => l.mood && l.mood !== 'neutral');
+  if (logs.length === 0) return null;
+  const byMood = {};
+  logs.forEach((l) => {
+    if (!byMood[l.mood]) byMood[l.mood] = { sum: 0, count: 0 };
+    const score = [l.fast, l.prayer, l.scripture].filter(Boolean).length;
+    byMood[l.mood].sum += score;
+    byMood[l.mood].count++;
+  });
+  const result = {};
+  Object.keys(byMood).forEach((m) => {
+    result[m] = Math.round((byMood[m].sum / byMood[m].count / 3) * 100);
+  });
+  return result;
+}
+
+/**
+ * Best time of day to log (from loggedAt)
+ */
+function bestLogTime(data) {
+  const logs = (data.logs || []).filter((l) => l.loggedAt);
+  if (logs.length === 0) return null;
+  const hours = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  logs.forEach((l) => {
+    try {
+      const d = new Date(l.loggedAt);
+      hours[d.getHours()]++;
+    } catch (_) {}
+  });
+  const max = Math.max(...hours);
+  if (max === 0) return null;
+  const idx = hours.indexOf(max);
+  const labels = ['12am', '1am', '2am', '3am', '4am', '5am', '6am', '7am', '8am', '9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm', '8pm', '9pm', '10pm', '11pm'];
+  return labels[idx];
+}
+
 window.FortyAnalytics = {
   disciplineScore,
   computeStreak,
   weeklyCompletion,
   failureDayOfWeek,
   streakHistoryData,
-  moodTrendData
+  moodTrendData,
+  moodVsDiscipline,
+  bestLogTime
 };

@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
   <div id="app">
     <!-- Onboarding -->
     <section id="onboarding" class="view" data-view="onboarding">
@@ -82,6 +83,10 @@
           <span class="tab-icon"><i class="fa-solid fa-pen-to-square"></i></span>
           <span class="tab-label">Log</span>
         </button>
+        <button type="button" class="tab-btn" role="tab" data-tab="calendar" aria-selected="false">
+          <span class="tab-icon"><i class="fa-solid fa-calendar-days"></i></span>
+          <span class="tab-label">Calendar</span>
+        </button>
         <button type="button" class="tab-btn" role="tab" data-tab="analytics" aria-selected="false">
           <span class="tab-icon"><i class="fa-solid fa-chart-line"></i></span>
           <span class="tab-label">Stats</span>
@@ -97,7 +102,7 @@
       </nav>
 
       <!-- Dashboard -->
-      <section id="dashboard" class="panel active" data-panel="dashboard">
+      <section id="dashboard" class="panel active" data-panel="dashboard" aria-hidden="false">
         <header class="panel-header">
           <h1 class="serif-title">Forty</h1>
           <button type="button" class="icon-btn emergency-trigger" title="I'm struggling"><i class="fa-solid fa-hand-holding-heart"></i></button>
@@ -126,14 +131,24 @@
           <div class="scripture-block">
             <p class="scripture-text" id="scripture-text"></p>
             <cite class="scripture-ref" id="scripture-ref"></cite>
+            <button type="button" class="btn-text btn-save-verse" id="btn-save-verse">Save verse to journal</button>
           </div>
+          <div class="daily-prompt-block" id="daily-prompt-block">
+            <h3 class="prompt-heading">Today&rsquo;s reflection</h3>
+            <p class="daily-prompt" id="daily-prompt"></p>
+          </div>
+          <div class="wisdom-block" id="wisdom-block">
+            <p class="wisdom-text" id="wisdom-text"></p>
+          </div>
+          <div class="prayer-intentions-compact" id="prayer-intentions-compact"></div>
+          <button type="button" class="btn-text btn-stations" id="btn-stations"><i class="fa-solid fa-cross"></i> Stations of the Cross</button>
           <button type="button" class="btn-primary btn-log" id="btn-log-today">Log Today</button>
           <button type="button" class="btn-secondary emergency-trigger" id="emergency-quick">I'm struggling</button>
         </div>
       </section>
 
       <!-- Daily Check-In (panel with trigger for modal) -->
-      <section id="checkin" class="panel" data-panel="checkin">
+      <section id="checkin" class="panel" data-panel="checkin" aria-hidden="true">
         <header class="panel-header">
           <h2 class="serif-heading">Daily Check-In</h2>
         </header>
@@ -144,8 +159,18 @@
         </div>
       </section>
 
+      <!-- Calendar -->
+      <section id="calendar" class="panel" data-panel="calendar" aria-hidden="true">
+        <header class="panel-header">
+          <h2 class="serif-heading">40-Day Calendar</h2>
+        </header>
+        <div class="calendar-content">
+          <div class="calendar-grid" id="calendar-grid"></div>
+        </div>
+      </section>
+
       <!-- Analytics -->
-      <section id="analytics" class="panel" data-panel="analytics">
+      <section id="analytics" class="panel" data-panel="analytics" aria-hidden="true">
         <header class="panel-header">
           <h2 class="serif-heading">Analytics</h2>
         </header>
@@ -174,11 +199,22 @@
             <p class="chart-desc">How you've felt across your check-ins</p>
             <div class="mood-chart" id="mood-chart"></div>
           </div>
+          <div class="chart-block" id="mood-discipline-block">
+            <h3>Mood vs discipline</h3>
+            <p class="chart-desc">Completion rate when you felt each way</p>
+            <div class="mood-discipline-chart" id="mood-discipline-chart"></div>
+          </div>
+          <div class="stats-grid" id="best-time-row">
+            <div class="stat-card">
+              <span class="stat-value" id="best-time">—</span>
+              <span class="stat-label">Best time to log</span>
+            </div>
+          </div>
         </div>
       </section>
 
       <!-- Reflection Journal -->
-      <section id="journal" class="panel" data-panel="journal">
+      <section id="journal" class="panel" data-panel="journal" aria-hidden="true">
         <header class="panel-header">
           <h2 class="serif-heading">Reflection Journal</h2>
           <button type="button" class="btn-text" id="btn-export">Export</button>
@@ -190,7 +226,7 @@
       </section>
 
       <!-- Settings -->
-      <section id="settings" class="panel" data-panel="settings">
+      <section id="settings" class="panel" data-panel="settings" aria-hidden="true">
         <header class="panel-header">
           <h2 class="serif-heading">Settings</h2>
         </header>
@@ -222,9 +258,35 @@
             </div>
           </div>
           <div class="settings-group">
+            <h3>Prayer intentions</h3>
+            <div class="prayer-intentions-list" id="prayer-intentions-list"></div>
+            <div class="prayer-add-row">
+              <input type="text" id="prayer-intention-input" class="input-text" placeholder="Add a prayer intention..." maxlength="100" />
+              <button type="button" class="btn-secondary btn-sm" id="btn-add-prayer">Add</button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h3>Reminder</h3>
+            <div class="settings-row">
+              <span>Daily reminder</span>
+              <input type="time" id="reminder-time" class="input-time" />
+            </div>
+          </div>
+          <div class="settings-group">
+            <h3>Fasting schedule</h3>
+            <select id="fasting-schedule" class="input-select">
+              <option value="all">All days (Mon–Sun)</option>
+              <option value="weekdays">Weekdays only</option>
+              <option value="custom">Custom (see notes)</option>
+            </select>
+          </div>
+          <div class="settings-group">
             <h3>Data</h3>
-            <a href="#" class="settings-row" id="export-data">Export data</a>
-            <a href="#" class="settings-row danger" id="reset-lent">Reset Lent</a>
+            <button type="button" class="settings-row settings-row-btn" id="import-data">Import data</button>
+            <input type="file" id="import-file-input" class="hidden" accept=".json,application/json" />
+            <button type="button" class="settings-row settings-row-btn" id="export-data">Export data</button>
+            <button type="button" class="settings-row settings-row-btn" id="btn-share-completion">Share completion</button>
+            <button type="button" class="settings-row settings-row-btn danger" id="reset-lent">Reset Lent</button>
           </div>
         </div>
       </section>
@@ -323,6 +385,8 @@
             <button type="button" class="mood-btn" data-mood="struggling" title="Struggling"><i class="fa-solid fa-cloud"></i></button>
             <button type="button" class="mood-btn" data-mood="tempted" title="Tempted"><i class="fa-solid fa-moon"></i></button>
           </div>
+          <label class="input-label">Scripture (optional)</label>
+          <input type="text" id="journal-entry-scripture" class="input-text" placeholder="e.g. Psalm 51:10" />
           <label class="input-label">Reflection</label>
           <textarea id="journal-entry-reflection" class="input-textarea" placeholder="Write your reflection..." rows="5"></textarea>
           <button type="button" class="btn-primary" id="btn-save-journal-entry">Save</button>
@@ -348,6 +412,43 @@
       </div>
     </div>
 
+    <!-- Stations of the Cross Modal -->
+    <div id="stations-modal" class="modal hidden">
+      <div class="modal-backdrop" data-close-stations></div>
+      <div class="modal-content modal-slide stations-modal-content">
+        <div class="modal-header">
+          <h2>Stations of the Cross</h2>
+          <button type="button" class="modal-close" aria-label="Close" data-close-stations><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body stations-body" id="stations-body"></div>
+      </div>
+    </div>
+
+    <!-- Milestone Modal (Day 10, 20, 30) -->
+    <div id="milestone-modal" class="modal hidden">
+      <div class="modal-backdrop" data-close-milestone></div>
+      <div class="modal-content milestone-modal-content">
+        <h2 class="serif-title" id="milestone-title"></h2>
+        <p class="milestone-message" id="milestone-message"></p>
+        <button type="button" class="btn-primary" id="milestone-dismiss" data-close-milestone>Continue</button>
+      </div>
+    </div>
+
+    <!-- Share Completion Modal -->
+    <div id="share-modal" class="modal hidden">
+      <div class="modal-backdrop" data-close-share></div>
+      <div class="modal-content share-modal-content">
+        <div class="modal-header">
+          <h2>Share your completion</h2>
+          <button type="button" class="modal-close" aria-label="Close" data-close-share><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <textarea id="share-text" class="input-textarea" rows="6" readonly></textarea>
+          <button type="button" class="btn-primary" id="btn-copy-share">Copy to clipboard</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Easter Summary -->
     <div id="easter-summary" class="modal hidden">
       <div class="modal-backdrop" data-close-easter></div>
@@ -360,6 +461,7 @@
   </div>
 
   <script src="js/storage.js"></script>
+  <script src="js/content.js"></script>
   <script src="js/analytics.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/router.js"></script>
