@@ -184,6 +184,7 @@
           <button type="button" class="btn-text" id="btn-export">Export</button>
         </header>
         <div class="journal-content">
+          <button type="button" class="btn-primary btn-new-entry" id="btn-new-journal-entry">New entry</button>
           <div class="journal-timeline" id="journal-timeline"></div>
         </div>
       </section>
@@ -200,7 +201,7 @@
               <p class="commitments-setting-line" id="settings-giving-up"></p>
               <p class="commitments-setting-line" id="settings-adding"></p>
             </div>
-            <a href="#" class="settings-row" id="edit-commitments">Edit commitments</a>
+            <button type="button" class="settings-row settings-row-btn" id="edit-commitments">Edit commitments</button>
           </div>
           <div class="settings-group">
             <h3>Appearance</h3>
@@ -232,7 +233,7 @@
     <!-- Daily Check-In Modal (slide-up) -->
     <div id="checkin-modal" class="modal hidden">
       <div class="modal-backdrop" data-close-modal></div>
-      <div class="modal-content modal-slide">
+      <div class="modal-content modal-slide checkin-modal-content">
         <div class="modal-header">
           <h2>Log Today</h2>
           <button type="button" class="modal-close" aria-label="Close" data-close-modal><i class="fa-solid fa-xmark"></i></button>
@@ -277,28 +278,62 @@
       </div>
     </div>
 
-    <!-- Emergency Mode Overlay -->
+    <!-- Emergency Mode (full-screen page) -->
     <div id="emergency-overlay" class="emergency-overlay hidden">
       <div class="emergency-content">
-        <p class="emergency-scripture" id="emergency-scripture"></p>
-        <cite class="emergency-ref" id="emergency-ref"></cite>
+        <h2 class="emergency-title">You&rsquo;re not alone</h2>
+        <p class="emergency-intro">Take a moment. Breathe. Remember why you began.</p>
+        <div class="emergency-scripture-block">
+          <p class="emergency-scripture" id="emergency-scripture"></p>
+          <cite class="emergency-ref" id="emergency-ref"></cite>
+        </div>
+        <p class="emergency-verse-note">A new verse each time you open this page.</p>
         <div class="emergency-why">
           <h3>Why you started</h3>
           <p id="emergency-why-text"></p>
         </div>
         <div class="breathing-timer">
+          <h3>Ground yourself</h3>
+          <p class="breath-desc">Follow the circle. Breathe in for 4 seconds, out for 4 seconds.</p>
           <div class="breath-circle" id="breath-circle"></div>
           <p class="breath-label" id="breath-label">Breathe in</p>
           <span class="breath-countdown" id="breath-countdown">60</span>
+          <span class="breath-unit">seconds</span>
         </div>
         <button type="button" class="btn-primary" id="emergency-close">Close and Stay Strong</button>
+      </div>
+    </div>
+
+    <!-- New Journal Entry Modal -->
+    <div id="journal-entry-modal" class="modal hidden">
+      <div class="modal-backdrop" data-close-journal-entry></div>
+      <div class="modal-content modal-slide checkin-modal-content">
+        <div class="modal-header">
+          <h2>New journal entry</h2>
+          <button type="button" class="modal-close" aria-label="Close" data-close-journal-entry><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body checkin-form">
+          <label class="input-label">Date</label>
+          <input type="date" id="journal-entry-date" class="input-date" />
+          <label class="input-label">Mood</label>
+          <div class="mood-selector" id="journal-mood-selector">
+            <button type="button" class="mood-btn" data-mood="peaceful" title="Peaceful"><i class="fa-solid fa-sun"></i></button>
+            <button type="button" class="mood-btn" data-mood="grateful" title="Grateful"><i class="fa-solid fa-heart"></i></button>
+            <button type="button" class="mood-btn" data-mood="neutral" title="Neutral"><i class="fa-regular fa-circle"></i></button>
+            <button type="button" class="mood-btn" data-mood="struggling" title="Struggling"><i class="fa-solid fa-cloud"></i></button>
+            <button type="button" class="mood-btn" data-mood="tempted" title="Tempted"><i class="fa-solid fa-moon"></i></button>
+          </div>
+          <label class="input-label">Reflection</label>
+          <textarea id="journal-entry-reflection" class="input-textarea" placeholder="Write your reflection..." rows="5"></textarea>
+          <button type="button" class="btn-primary" id="btn-save-journal-entry">Save</button>
+        </div>
       </div>
     </div>
 
     <!-- Edit Commitments Modal -->
     <div id="edit-commitments-modal" class="modal edit-commitments-modal hidden">
       <div class="modal-backdrop" data-close-edit-commitments></div>
-      <div class="modal-content modal-slide">
+      <div class="modal-content modal-slide checkin-modal-content">
         <div class="modal-header">
           <h2>Edit commitments</h2>
           <button type="button" class="modal-close" aria-label="Close" data-close-edit-commitments><i class="fa-solid fa-xmark"></i></button>

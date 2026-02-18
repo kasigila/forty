@@ -118,7 +118,7 @@ function getOrCreateLogForToday(data) {
 }
 
 /**
- * Upsert log for a date (only allows today; previous days are locked)
+ * Upsert log for a date (only allows today; previous days are locked for check-in)
  */
 function saveLog(data, log) {
   const today = todayString();
@@ -131,6 +131,20 @@ function saveLog(data, log) {
 
   logs.sort((a, b) => (a.date > b.date ? -1 : 1));
   return save({ ...data, logs }) ? { ok: true } : { ok: false, reason: 'save' };
+}
+
+/**
+ * Save or update a journal entry (reflection) for any date
+ */
+function saveJournalEntry(data, dateStr, reflection, mood) {
+  const logs = [...(data.logs || [])];
+  const idx = logs.findIndex((l) => l.date === dateStr);
+  const base = idx >= 0 ? { ...logs[idx] } : { date: dateStr, fast: false, prayer: false, scripture: false, mood: 'neutral', reflection: '' };
+  const entry = { ...base, date: dateStr, reflection: (reflection || '').trim(), mood: mood || base.mood };
+  if (idx >= 0) logs[idx] = entry;
+  else logs.push(entry);
+  logs.sort((a, b) => (a.date > b.date ? -1 : 1));
+  return save({ ...data, logs });
 }
 
 /**
@@ -156,6 +170,7 @@ window.FortyStorage = {
   getLogForDate,
   getOrCreateLogForToday,
   saveLog,
+  saveJournalEntry,
   reset,
   DEFAULT_DATA
 };

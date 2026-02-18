@@ -167,12 +167,13 @@
     const day = S.currentDay(data);
     const scripture = getScriptureForDay(day);
 
+    const hasCommitments = !!(data.commitments?.givingUp?.trim() || data.commitments?.adding?.trim());
     const givingUpEl = document.getElementById('giving-up-line');
     const addingEl = document.getElementById('adding-line');
-    if (givingUpEl) givingUpEl.textContent = data.commitments?.givingUp ? 'Giving up: ' + data.commitments.givingUp : '';
-    if (addingEl) addingEl.textContent = data.commitments?.adding ? 'Adding: ' + data.commitments.adding : '';
+    if (givingUpEl) givingUpEl.textContent = data.commitments?.givingUp?.trim() ? 'Giving up: ' + data.commitments.givingUp.trim() : '';
+    if (addingEl) addingEl.textContent = data.commitments?.adding?.trim() ? 'Adding: ' + data.commitments.adding.trim() : '';
     const cr = document.getElementById('commitments-reminder');
-    if (cr) cr.style.display = (data.commitments?.givingUp || data.commitments?.adding) ? 'block' : 'none';
+    if (cr) cr.style.display = hasCommitments ? 'block' : 'none';
 
     const dayNumEl = document.getElementById('day-num');
     const ringFill = document.querySelector('.ring-fill');
@@ -244,6 +245,16 @@
   // ═══════════════════════════════════════════════════════════
   function renderAnalytics() {
     data = S.load();
+    const els = {
+      score: document.getElementById('discipline-score'),
+      label: document.getElementById('discipline-label'),
+      weekly: document.getElementById('weekly-pct'),
+      failure: document.getElementById('failure-day'),
+      streakChart: document.getElementById('streak-chart'),
+      moodChart: document.getElementById('mood-chart')
+    };
+    if (!els.score || !els.streakChart) return;
+
     const { score, label } = A.disciplineScore(data);
     const weeklyPct = A.weeklyCompletion(data);
     const failureDay = A.failureDayOfWeek(data) || '—';
@@ -251,12 +262,12 @@
     const moodData = A.moodTrendData(data);
     const hasLogs = (data.logs || []).length > 0;
 
-    document.getElementById('discipline-score').textContent = score ?? '—';
-    document.getElementById('discipline-label').textContent = hasLogs ? label : 'Log check-ins to see your score';
-    document.getElementById('weekly-pct').textContent = hasLogs ? weeklyPct + '%' : '—';
-    document.getElementById('failure-day').textContent = failureDay;
+    els.score.textContent = score ?? '—';
+    els.label.textContent = hasLogs ? label : 'Log check-ins to see your score';
+    els.weekly.textContent = hasLogs ? weeklyPct + '%' : '—';
+    els.failure.textContent = failureDay;
 
-    const streakChart = document.getElementById('streak-chart');
+    const streakChart = els.streakChart;
     streakChart.innerHTML = '';
     streakData.forEach((d) => {
       const wrap = document.createElement('div');
@@ -273,7 +284,7 @@
       streakChart.appendChild(wrap);
     });
 
-    const moodChart = document.getElementById('mood-chart');
+    const moodChart = els.moodChart;
     moodChart.innerHTML = '';
     const moodMax = Math.max(...Object.values(moodData), 1);
     const moodLabelsMap = { peaceful: 'fa-solid fa-sun', grateful: 'fa-solid fa-heart', neutral: 'fa-regular fa-circle', struggling: 'fa-solid fa-cloud', tempted: 'fa-solid fa-moon' };
@@ -452,6 +463,42 @@
     renderDashboard();
   }
 
+  function openJournalEntryModal() {
+    data = S.load();
+    const start = S.parseDate(data.startDate);
+    const dateInput = document.getElementById('journal-entry-date');
+    dateInput.value = S.todayString();
+    if (start) {
+      const min = new Date(start);
+      const max = new Date(start);
+      max.setDate(max.getDate() + 39);
+      dateInput.min = min.toISOString().slice(0, 10);
+      dateInput.max = max.toISOString().slice(0, 10);
+    }
+    document.getElementById('journal-entry-reflection').value = '';
+    document.querySelectorAll('#journal-mood-selector .mood-btn').forEach((b) => b.classList.remove('selected'));
+    const neutral = document.querySelector('#journal-mood-selector .mood-btn[data-mood="neutral"]');
+    if (neutral) neutral.classList.add('selected');
+    U.show(document.getElementById('journal-entry-modal'));
+    document.getElementById('journal-entry-modal').classList.remove('hidden');
+  }
+  function closeJournalEntryModal() {
+    U.hide(document.getElementById('journal-entry-modal'));
+    document.getElementById('journal-entry-modal').classList.add('hidden');
+  }
+  function saveJournalEntry() {
+    const dateStr = document.getElementById('journal-entry-date').value;
+    const reflection = document.getElementById('journal-entry-reflection').value.trim();
+    const moodBtn = document.querySelector('#journal-mood-selector .mood-btn.selected');
+    const mood = moodBtn?.dataset.mood || 'neutral';
+    if (!dateStr) return;
+    data = S.load();
+    if (S.saveJournalEntry(data, dateStr, reflection, mood)) {
+      closeJournalEntryModal();
+      renderJournal();
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════
   // ROUTING & TABS
   // ═══════════════════════════════════════════════════════════
@@ -552,8 +599,13 @@
       const toneBtn = e.target.closest('#settings .tone-btn');
       if (toneBtn) {
         e.preventDefault();
-        document.querySelectorAll('#settings .tone-btn').forEach((b) => b.classList.remove('selected'));
+        document.querySelectorAll('#settings .tone-btn').forEach((b) => {
+          b.classList.remove('selected');
+          b.removeAttribute('aria-selected');
+        });
         toneBtn.classList.add('selected');
+        toneBtn.setAttribute('aria-selected', 'true');
+        data = S.load();
         data.toneMode = toneBtn.dataset.tone;
         S.save(data);
         return;
@@ -578,14 +630,38 @@
         exportData();
         return;
       }
-      if (e.target.closest('#edit-commitments')) {
+      const editCommitmentsBtn = e.target.closest('#edit-commitments');
+      if (editCommitmentsBtn) {
         e.preventDefault();
+        e.stopPropagation();
         openEditCommitmentsModal();
         return;
       }
       if (e.target.closest('[data-close-edit-commitments]')) {
         e.preventDefault();
         closeEditCommitmentsModal();
+        return;
+      }
+      const journalMoodBtn = e.target.closest('#journal-mood-selector .mood-btn');
+      if (journalMoodBtn) {
+        e.preventDefault();
+        document.querySelectorAll('#journal-mood-selector .mood-btn').forEach((b) => b.classList.remove('selected'));
+        journalMoodBtn.classList.add('selected');
+        return;
+      }
+      if (e.target.id === 'btn-new-journal-entry' || e.target.closest('#btn-new-journal-entry')) {
+        e.preventDefault();
+        openJournalEntryModal();
+        return;
+      }
+      if (e.target.closest('[data-close-journal-entry]')) {
+        e.preventDefault();
+        closeJournalEntryModal();
+        return;
+      }
+      if (e.target.id === 'btn-save-journal-entry' || e.target.closest('#btn-save-journal-entry')) {
+        e.preventDefault();
+        saveJournalEntry();
         return;
       }
       if (e.target.id === 'btn-save-commitments' || e.target.closest('#btn-save-commitments')) {
@@ -628,7 +704,9 @@
       document.getElementById('checkin-modal').classList.add('hidden');
     }
 
-    document.getElementById('toggle-dark')?.addEventListener('change', toggleDark);
+    document.body.addEventListener('change', (e) => {
+      if (e.target.id === 'toggle-dark') toggleDark();
+    });
 
     renderDashboard();
     checkEasterSummary();
