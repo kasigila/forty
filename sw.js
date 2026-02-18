@@ -15,7 +15,8 @@ const STATIC_ASSETS = [
   './js/storage.js',
   './js/analytics.js',
   './js/ui.js',
-  './assets/icons/icon.svg'
+  './assets/icons/icon-192.png',
+  './assets/icons/icon-512.png'
 ];
 
 // Install: cache core assets
